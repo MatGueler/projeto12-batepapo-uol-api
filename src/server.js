@@ -6,7 +6,9 @@ import dotenv from 'dotenv'
 
 dotenv.config();
 
-const mongoClient = new MongoClient(process.env.URL_CONNECT_MONGO);
+const mongoClient = new MongoClient('mongodb://127.0.0.1:27017');
+
+// const mongoClient = new MongoClient(process.env.URL_CONNECT_MONGO);
 let db;
 
 mongoClient.connect().then(() => {
