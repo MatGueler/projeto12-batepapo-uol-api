@@ -6,9 +6,7 @@ import dotenv from 'dotenv'
 
 dotenv.config();
 
-const mongoClient = new MongoClient('mongodb://127.0.0.1:27017');
-
-// const mongoClient = new MongoClient(process.env.URL_CONNECT_MONGO);
+const mongoClient = new MongoClient(process.env.URL_CONNECT_MONGO);
 let db;
 
 mongoClient.connect().then(() => {
@@ -19,26 +17,42 @@ const server = express();
 server.use(express.json());
 server.use(cors());
 
-// server.get('/participants', (req, res) => {
 
-// db.collection("users").findOne({
-// 	email: "joao@email.com"
-// }).then(user => {
-// 	console.log(user); // imprimirá um objeto { "_id": ..., "email": ..., "password": ... } 
-// });
+server.post('/participants', async (req, res) => {
 
-//     res.status(200).send('OK')
-// })
+    const { name } = req.body;
 
-server.post('/participants', (req, res) => {
+    const valid = await db.collection("users").findOne({
+        name: 'julius'
+    })
+    if(valid){
+        res.sendStatus(409)
+        return
+    }
 
-    // db.collection("users").insertOne({
-// 	email: "joao@email.com",
-// 	password: "minha_super_senha"
-// });
+    try {
+        db.collection("users").insertOne({
+            name: name
+        });
 
-    res.status(200).send('OK')
-    console.log('ok')
+        res.status(200).send('OK')
+    }
+    catch {
+        res.sendStatus(500)
+    }
+
+})
+
+
+server.get('/participants', async (req, res) => {
+
+    try {
+        const users = await db.collection("users").find().toArray();
+        res.send(users)
+    }
+    catch {
+        res.sendStatus(500)
+    }
 })
 
 server.listen(5000)
