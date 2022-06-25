@@ -180,8 +180,12 @@ server.get('/messages', async (req, res) => {
 
     const limit = parseInt(req.query.limit)
 
+    const { user } = req.headers
+
     try {
-        const messages = await db.collection("messages").find().toArray();
+        const messages = await db.collection("messages").find(
+            { $or: [{ to: user }, { to: 'Todos' }, { from: user }, { type: 'message' }] }
+        ).toArray();
 
         let limitedMessages = []
 
