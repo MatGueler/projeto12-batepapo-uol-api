@@ -19,6 +19,36 @@ const server = express();
 server.use(express.json());
 server.use(cors());
 
+async function deletParticipants() {
+
+    const users = await db.collection("users").find().toArray();
+
+    const now = Date.now()
+
+    const time = dayjs().format('HH:MM:ss')
+
+    for (let counter = 0; counter < users.length; counter++) {
+        if ((now - (users[counter]).lastStatus) > 10000) {
+
+            let name = (users[counter]).name
+
+            try {
+                await db.collection('users').deleteOne(users[counter])
+
+                db.collection("messages").insertOne({
+                    from: name,
+                    to: 'Todos',
+                    text: 'sai da sala...',
+                    type: 'status',
+                    time
+                });
+            } catch {
+                res.sendStatus(500)
+            }
+        }
+    }
+}
+
 // Participantes
 
 server.post('/participants', async (req, res) => {
@@ -65,6 +95,9 @@ server.post('/participants', async (req, res) => {
         });
 
         res.status(201).send('OK')
+
+        deletParticipants()
+        setInterval(deletParticipants, 15000)
     }
     catch {
         res.sendStatus(500)
@@ -166,6 +199,34 @@ server.get('/messages', async (req, res) => {
     catch {
         res.sendStatus(500)
     }
+})
+
+// Status
+
+server.post('/status', async (req, res) => {
+
+    const { user } = req.headers
+
+    const time = Date.now()
+
+    const validName = await db.collection('users').findOne({ name: user })
+
+    if (!validName) {
+        res.sendStatus(404)
+    }
+
+    try {
+
+        db.collection("users").updateOne({
+            name: user
+        }, { $set: { lastStatus: time } });
+
+        res.sendStatus(200)
+    }
+    catch {
+        res.sendStatus(500)
+    }
+
 })
 
 server.listen(5000)
